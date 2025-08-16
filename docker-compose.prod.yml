@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  api:
+    build: ./api
+    environment:
+      OPENAI_BASE_URL: "http://host.docker.internal:1234/v1"  # Update to your LM Studio server
+      OPENAI_API_KEY: "none"
+      OPENAI_CHAT_MODEL: "google/gemma-3n-e4b"
+      CHROMA_URL: "http://chroma:8000"
+      REDIS_URL: "redis://redis:6379/0"
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "minio"
+      MINIO_SECRET_KEY: "${MINIO_PASSWORD:-minio12345}"
+      MINIO_BUCKET: "jarvisdocs"
+      EMBEDDING_MODEL: "all-MiniLM-L6-v2"
+      IMAGE_EMBEDDING_MODEL: "clip-ViT-B-32"
+      MAX_CONTEXT_CHARS: "120000"
+    volumes: [ "api_cache:/root/.cache" ]
+    expose: [ "8080" ]
+    depends_on: [ chroma, redis, minio ]
+    restart: unless-stopped
+
+  webui:
+    build: ./streamlit-ui
+    environment:
+      API_URL: "http://api:8080"
+    ports: [ "80:8501" ]  # Use port 80 for production
+    depends_on: [ api ]
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports: [ "80:80", "443:443" ]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl:ro  # SSL certificates
+    depends_on: [ webui ]
+    restart: unless-stopped
+
+  chroma:
+    image: chromadb/chroma:0.4.15
+    environment:
+      CHROMA_SERVER_HOST: 0.0.0.0
+      CHROMA_SERVER_HTTP_PORT: 8000
+      ALLOW_RESET: "TRUE"
+    volumes: [ "chroma_data:/chroma" ]
+    expose: [ "8000" ]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    expose: [ "6379" ]
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: "${MINIO_PASSWORD:-minio12345}"
+    volumes: [ "minio_data:/data" ]
+    expose: [ "9000", "9001" ]
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+  minio_data:
+  api_cache:

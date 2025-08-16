@@ -1,0 +1,60 @@
+services:
+  api:
+    build: ./api
+    environment:
+      OPENAI_BASE_URL: "http://host.docker.internal:1234/v1"
+      OPENAI_API_KEY: "none"
+      OPENAI_CHAT_MODEL: "microsoft/DialoGPT-medium"
+      CHROMA_URL: "http://chroma:8000"
+      REDIS_URL: "redis://redis:6379/0"
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "minio"
+      MINIO_SECRET_KEY: "minio12345"
+      MINIO_BUCKET: "medrandocs"
+      EMBEDDING_MODEL: "BAAI/bge-m3"
+      IMAGE_EMBEDDING_MODEL: "openai/clip-vit-large-patch14"
+      OCR_MODEL: "microsoft/trocr-base-printed"
+      MAX_CONTEXT_CHARS: "120000"
+    volumes: [ "api_cache:/root/.cache" ]
+    ports: [ "8080:8080" ]
+    depends_on: [ chroma, redis, minio ]
+    restart: unless-stopped
+
+  chroma:
+    image: chromadb/chroma:0.4.15
+    environment:
+      CHROMA_SERVER_HOST: 0.0.0.0
+      CHROMA_SERVER_HTTP_PORT: 8000
+      ALLOW_RESET: "TRUE"
+      CHROMA_SERVER_AUTHN_CREDENTIALS_FILE: ""
+      CHROMA_SERVER_AUTHN_PROVIDER: ""
+      CHROMA_CLIENT_AUTH_PROVIDER: ""
+    volumes: [ "chroma_data:/chroma" ]
+    ports: [ "8001:8000" ]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports: [ "6379:6379" ]
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    volumes: [ "minio_data:/data" ]
+    ports: [ "9000:9000", "9001:9001" ]
+    restart: unless-stopped
+
+  webui:
+    build: ./simple-ui
+    ports: [ "3000:80" ]
+    depends_on: [ api ]
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+  minio_data:
+  api_cache:

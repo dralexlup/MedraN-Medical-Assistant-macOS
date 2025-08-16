@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 MedraN AI Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .status { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tabs { display: flex; background: white; border-radius: 10px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab { flex: 1; padding: 15px 20px; cursor: pointer; border: none; background: white; transition: all 0.3s; }
+        .tab:hover { background: #f8f9fa; }
+        .tab.active { background: #667eea; color: white; }
+        .tab-content { display: none; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        .chat-container { height: 400px; border: 2px solid #e9ecef; border-radius: 10px; overflow-y: auto; padding: 20px; margin-bottom: 20px; background: #fafbfc; }
+        .message { margin-bottom: 15px; padding: 12px 16px; border-radius: 18px; max-width: 70%; }
+        .user { background: #667eea; color: white; margin-left: auto; text-align: right; }
+        .assistant { background: white; border: 1px solid #e9ecef; }
+        .input-group { display: flex; gap: 10px; }
+        .input-group input, .input-group textarea { flex: 1; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 25px; font-size: 16px; }
+        .input-group button { padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .input-group button:hover { background: #5a67d8; transform: translateY(-1px); }
+        .file-input { margin-bottom: 20px; }
+        .file-input input[type="file"] { padding: 10px; border: 2px dashed #667eea; border-radius: 10px; width: 100%; }
+        .result { margin-top: 20px; padding: 20px; border-radius: 10px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .loading { text-align: center; padding: 20px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 MedraN AI Assistant</h1>
+            <p>Your intelligent document assistant with voice support</p>
+        </div>
+
+        <div class="status">
+            <strong>API Status:</strong> <span id="apiStatus">Checking...</span>
+            <button onclick="checkHealth()" style="margin-left: 10px; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Refresh</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('chat')">💬 Chat</button>
+            <button class="tab" onclick="showTab('voice')">🎤 Voice</button>
+            <button class="tab" onclick="showTab('documents')">📄 Documents</button>
+        </div>
+
+        <div id="chat" class="tab-content active">
+            <h2>💬 Chat with MedraN</h2>
+            <div class="chat-container" id="chatContainer"></div>
+            <div class="input-group">
+                <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <div id="voice" class="tab-content">
+            <h2>🎤 Voice Chat</h2>
+            <div class="file-input">
+                <label><strong>Upload Audio File:</strong></label>
+                <input type="file" id="audioFile" accept=".wav,.mp3,.m4a,.flac">
+            </div>
+            <button onclick="transcribeAudio()">🎯 Transcribe Only</button>
+            <button onclick="voiceChat()" style="margin-left: 10px;">💬 Voice Chat</button>
+            <div id="voiceResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div id="documents" class="tab-content">
+            <h2>📄 Document Management</h2>
+            <div class="file-input">
+                <label><strong>Upload PDF Document:</strong></label>
+                <input type="file" id="pdfFile" accept=".pdf">
+            </div>
+            <button onclick="ingestDocument()">📥 Ingest Document</button>
+            <div id="docResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let chatHistory = [];
+
+        // Check API health on load
+        checkHealth();
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/healthz`);
+                if (response.ok) {
+                    document.getElementById('apiStatus').innerHTML = '🟢 API is healthy and responding';
+                } else {
+                    document.getElementById('apiStatus').innerHTML = `🟡 API responded with status: ${response.status}`;
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = `🔴 API is not responding: ${error.message}`;
+            }
+        }
+
+        function addMessage(role, content, citations = []) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            let html = content;
+            if (citations && citations.length > 0) {
+                html += '<br><br><strong>Sources:</strong><ul>';
+                citations.forEach((cite, i) => {
+                    html += `<li>${cite.title || 'Unknown'} (p.${cite.page || '?'})</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            messageDiv.innerHTML = html;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: message,
+                        user_id: 'web_user',
+                        k: 6,
+                        return_images: true,
+                        remember: true
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                addMessage('assistant', data.answer || 'No response', data.citations || []);
+                
+            } catch (error) {
+                addMessage('assistant', `Error: ${error.message}`, []);
+            }
+        }
+
+        async function transcribeAudio() {
+            const fileInput = document.getElementById('audioFile');
+            const resultDiv = document.getElementById('voiceResult');
+            
+            if (!fileInput.files[0]) {
+                showResult('voiceResult', 'Please select an audio file first.', 'error');
+                return;
+            }
+
+            showLoading('voiceResult');
+
+            const formData = new FormData();
+            formData.append('audio', fileInput.files[0]);
+
+            try {
+                const response = await fetch(`${API_BASE}/transcribe`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                showResult('voiceResult', `<strong>Transcription:</strong><br>${data.text || 'No transcription available'}`, 'success');
+                
+            } catch (error) {
+                showResult('voiceResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function voiceChat() {
+            const fileInput = document.getElementById('audioFile');
+            
+            if (!fileInput.files[0]) {
+                showResult('voiceResult', 'Please select an audio file first.', 'error');
+                return;
+            }
+
+            showLoading('voiceResult');
+
+            // First transcribe
+            const formData = new FormData();
+            formData.append('audio', fileInput.files[0]);
+
+            try {
+                const transcribeResponse = await fetch(`${API_BASE}/transcribe`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!transcribeResponse.ok) throw new Error(`Transcription failed: HTTP ${transcribeResponse.status}`);
+                
+                const transcribeData = await transcribeResponse.json();
+                const transcription = transcribeData.text || '';
+
+                if (!transcription) {
+                    showResult('voiceResult', 'No transcription available', 'error');
+                    return;
+                }
+
+                // Then chat
+                const chatResponse = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: transcription,
+                        user_id: 'web_user',
+                        k: 6,
+                        return_images: true,
+                        remember: true
+                    })
+                });
+
+                if (!chatResponse.ok) throw new Error(`Chat failed: HTTP ${chatResponse.status}`);
+                
+                const chatData = await chatResponse.json();
+                
+                let result = `<strong>You said:</strong> ${transcription}<br><br>`;
+                result += `<strong>MedraN:</strong> ${chatData.answer || 'No response'}`;
+                
+                if (chatData.citations && chatData.citations.length > 0) {
+                    result += '<br><br><strong>Sources:</strong><ul>';
+                    chatData.citations.forEach(cite => {
+                        result += `<li>${cite.title || 'Unknown'} (p.${cite.page || '?'})</li>`;
+                    });
+                    result += '</ul>';
+                }
+                
+                showResult('voiceResult', result, 'success');
+                
+            } catch (error) {
+                showResult('voiceResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function ingestDocument() {
+            const fileInput = document.getElementById('pdfFile');
+            
+            if (!fileInput.files[0]) {
+                showResult('docResult', 'Please select a PDF file first.', 'error');
+                return;
+            }
+
+            showLoading('docResult');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('title', fileInput.files[0].name);
+
+            try {
+                const response = await fetch(`${API_BASE}/ingest`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                const result = `✅ Successfully ingested: ${data.doc_id}<br>📄 Pages: ${data.pages}<br>📝 Chunks: ${data.chunks}`;
+                showResult('docResult', result, 'success');
+                
+            } catch (error) {
+                showResult('docResult', `❌ Error ingesting document: ${error.message}`, 'error');
+            }
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result loading';
+            element.innerHTML = '<div class="spinner"></div>Processing...';
+        }
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.innerHTML = message;
+        }
+    </script>
+</body>
+</html>
