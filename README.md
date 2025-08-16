@@ -33,8 +33,8 @@ A powerful, self-hosted medical AI assistant designed for healthcare professiona
 ### 1. Clone & Run
 
 ```bash
-git clone <repository-url>
-cd medran-ai-assistant
+git clone https://github.com/dralexlup/MedraN-Medical-Assistant.git
+cd MedraN-Medical-Assistant
 
 # Start all services (builds images automatically for your architecture)
 docker compose up --build -d
