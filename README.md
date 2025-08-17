@@ -42,10 +42,13 @@ docker compose up --build -d
 
 ### 2. Access the System
 
-- **Web UI**: http://localhost:3000
-- **API**: http://localhost:8080
-- **ChromaDB**: http://localhost:8001
-- **MinIO Console**: http://localhost:9001
+🚀 **Single Entry Point**: Everything accessible via port 3000!
+
+- **Web UI**: http://localhost:3000/
+- **API**: http://localhost:3000/api/...
+- **Health Check**: http://localhost:3000/health
+- **MinIO Console**: http://localhost:3000/minio-console/ (optional)
+- **ChromaDB**: http://localhost:3000/chroma/ (optional)
 
 ### 3. Upload Documents
 
@@ -109,22 +112,27 @@ MAX_CONTEXT_CHARS: "120000"                            # Maximum context window
 
 ### Core Functionality
 
-- `GET /healthz` - Health check
-- `POST /ingest` - Upload and process documents (with OCR enhancement)
-- `POST /chat` - Chat with your knowledge base
-- `POST /transcribe` - Voice-to-text transcription
+- `GET /api/healthz` - Health check
+- `POST /api/ingest` - Upload and process documents (with OCR enhancement)
+- `POST /api/chat` - Chat with your knowledge base
+- `POST /api/transcribe` - Voice-to-text transcription
+- `GET /health` - System health check (reverse proxy)
 
 ### Example Usage
 
 ```bash
+# Health check
+curl http://localhost:3000/health
+curl http://localhost:3000/api/healthz
+
 # Upload a document
-curl -X POST "http://localhost:8080/ingest" \
+curl -X POST "http://localhost:3000/api/ingest" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@document.pdf" \
   -F "title=My Document"
 
 # Chat with the document
-curl -X POST "http://localhost:8080/chat" \
+curl -X POST "http://localhost:3000/api/chat" \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What are the main topics covered?",
@@ -138,17 +146,24 @@ curl -X POST "http://localhost:8080/chat" \
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Web UI        │    │   FastAPI        │    │   LLM Server    │
-│   (Port 3000)   │◄──►│   (Port 8080)    │◄──►│   (Port 1234)   │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │
-                    ┌───────────┼───────────┐
-                    │           │           │
-            ┌───────▼────┐ ┌────▼────┐ ┌───▼──────┐
-            │  ChromaDB  │ │  Redis  │ │  MinIO   │
-            │ (Vectors)  │ │(Memory) │ │(Storage) │
-            └────────────┘ └─────────┘ └──────────┘
+                    ┌─────────────────┐
+                    │ Nginx Proxy     │ ←── Single Entry Point
+                    │ (Port 3000)     │     http://localhost:3000
+                    └─────────┬───────┘
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+    ┌─────────────────┐ ┌──────────────┐ ┌─────────────────┐
+    │   Web UI        │ │   FastAPI    │ │   LLM Server    │
+    │   (Internal)    │ │ (Internal)   │ │   (Port 1234)   │
+    └─────────────────┘ └──────┬───────┘ └─────────────────┘
+                               │
+                   ┌───────────┼───────────┐
+                   │           │           │
+           ┌───────▼────┐ ┌────▼────┐ ┌───▼──────┐
+           │  ChromaDB  │ │  Redis  │ │  MinIO   │
+           │ (Internal) │ │(Internal)│ │(Internal)│
+           └────────────┘ └─────────┘ └──────────┘
 ```
 
 ## 🔧 Advanced Configuration
