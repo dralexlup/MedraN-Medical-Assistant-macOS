@@ -11,7 +11,7 @@ services:
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ACCESS_KEY: "minio"
       MINIO_SECRET_KEY: "${MINIO_PASSWORD:-minio12345}"
-      MINIO_BUCKET: "jarvisdocs"
+      MINIO_BUCKET: "medrandocs"
       EMBEDDING_MODEL: "all-MiniLM-L6-v2"
       IMAGE_EMBEDDING_MODEL: "clip-ViT-B-32"
       MAX_CONTEXT_CHARS: "120000"

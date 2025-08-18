@@ -3,13 +3,27 @@ import torch
 from sentence_transformers import SentenceTransformer
 from .settings import settings
 
-# Detect available device
+# Detect available device with optimizations
 def _get_device():
-    if torch.cuda.is_available():
-        return "cuda"
-    elif torch.backends.mps.is_available():
-        return "mps"  # Apple Silicon GPU
+    import os
+    # Check for CUDA
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        device = "cuda"
+        print(f"🚀 GPU detected: {torch.cuda.get_device_name(0)}")
+        return device
+    
+    # Check for Apple Silicon MPS (Metal Performance Shaders)
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        device = "mps"
+        print(f"🍎 Apple Metal GPU detected, using MPS acceleration")
+        return device
+    
     else:
+        # Optimize CPU inference
+        cpu_threads = os.cpu_count()
+        if cpu_threads:
+            torch.set_num_threads(min(cpu_threads, 8))  # Limit to 8 threads max
+            print(f"💻 Using CPU with {min(cpu_threads, 8)} threads optimized")
         return "cpu"
 
 # Global variables for lazy loading
@@ -99,14 +113,26 @@ async def call_llm(prompt: str, context_blocks):
     ]
     payload = {"model": settings.openai_chat_model, "messages": messages, "temperature": 0.2, "max_tokens": 512}
     
+    print(f"🤖 Calling LLM: {settings.openai_chat_model} at {settings.openai_base_url}")
+    
     try:
         async with httpx.AsyncClient(timeout=120) as ax:
             r = await ax.post(f"{settings.openai_base_url}/chat/completions", json=payload)
             r.raise_for_status()
-            return r.json()["choices"][0]["message"]["content"]
+            result = r.json()
+            if "choices" in result and len(result["choices"]) > 0:
+                return result["choices"][0]["message"]["content"]
+            else:
+                raise Exception(f"No response choices in LLM result: {result}")
     except httpx.ConnectError as e:
+        print(f"❌ LLM Connection Error: {str(e)}")
         raise Exception(f"Cannot connect to LLM server at {settings.openai_base_url}. Please ensure LM Studio is running with network access enabled. Error: {str(e)}")
     except httpx.TimeoutException as e:
+        print(f"❌ LLM Timeout Error: {str(e)}")
         raise Exception(f"LLM server timeout. The model may be too slow or overloaded. Error: {str(e)}")
+    except httpx.HTTPStatusError as e:
+        print(f"❌ LLM HTTP Error {e.response.status_code}: {e.response.text}")
+        raise Exception(f"LLM server returned error {e.response.status_code}: {e.response.text}")
     except Exception as e:
+        print(f"❌ LLM General Error: {str(e)}")
         raise Exception(f"LLM error: {str(e)}")

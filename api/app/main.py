@@ -14,7 +14,7 @@ from faster_whisper import WhisperModel
 from .settings import settings
 import tempfile, os
 
-app = FastAPI(title="Jarvis-Docs (LM Studio)")
+app = FastAPI(title="MedraN Medical AI Assistant API")
 
 # Add CORS middleware
 app.add_middleware(

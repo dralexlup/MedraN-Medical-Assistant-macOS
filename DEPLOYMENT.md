@@ -1,6 +1,6 @@
-# 🚀 Jarvis AI Assistant - Deployment Guide
+# 🏥 MedraN Medical AI Assistant - Deployment Guide
 
-## 🌐 Making Your Jarvis System Publicly Available
+## 🌐 Making Your MedraN System Publicly Available
 
 ### Option 1: Quick Tunnel (Temporary - Great for Testing)
 
@@ -12,7 +12,7 @@ brew install ngrok
 # Start ngrok tunnel
 ngrok http 3000
 
-# Your Jarvis will be available at: https://abc123.ngrok.io
+# Your MedraN Medical AI Assistant will be available at: https://abc123.ngrok.io
 ```
 
 #### Using Cloudflare Tunnel
@@ -30,7 +30,7 @@ cloudflared tunnel --url http://localhost:3000
 1. Push your code to GitHub
 2. Visit https://railway.app and sign in
 3. Click "New Project" → "Deploy from GitHub repo"
-4. Select your `jarvis-plus-local` repository
+4. Select your `medran-medical-ai-local` repository
 5. Railway auto-detects Docker and deploys
 6. Set environment variables in Railway dashboard:
    - `OPENAI_BASE_URL`: Your LM Studio server URL
@@ -60,8 +60,8 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install docker.io docker-compose nginx certbot python3-certbot-nginx -y
 
 # 2. Clone repository
-git clone https://github.com/yourusername/jarvis-plus-local.git
-cd jarvis-plus-local
+git clone https://github.com/yourusername/medran-medical-ai-local.git
+cd medran-medical-ai-local
 
 # 3. Configure domain
 sudo nano /etc/nginx/sites-available/jarvis
@@ -169,8 +169,8 @@ docker-compose ps
 ### Backup
 ```bash
 # Backup data
-docker run --rm -v jarvis-plus-local_chroma_data:/data -v $(pwd):/backup alpine tar czf /backup/chroma_backup.tar.gz -C /data .
-docker run --rm -v jarvis-plus-local_minio_data:/data -v $(pwd):/backup alpine tar czf /backup/minio_backup.tar.gz -C /data .
+docker run --rm -v medran-medical-ai-local_chroma_data:/data -v $(pwd):/backup alpine tar czf /backup/chroma_backup.tar.gz -C /data .
+docker run --rm -v medran-medical-ai-local_minio_data:/data -v $(pwd):/backup alpine tar czf /backup/minio_backup.tar.gz -C /data .
 ```
 
 ### Updates

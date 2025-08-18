@@ -1,6 +1,6 @@
 # 🐳 Docker Container Sharing Guide
 
-## 📦 How to Share Your Jarvis Docker Containers
+## 📦 How to Share Your MedraN Medical AI Assistant Docker Containers
 
 ### Method 1: Docker Hub (Public Repository)
 
@@ -15,12 +15,12 @@
 docker login
 
 # Tag your images
-docker tag jarvis-plus-local-api yourusername/jarvis-api:latest
-docker tag jarvis-plus-local-webui yourusername/jarvis-webui:latest
+docker tag medran-medical-ai-local-api yourusername/medran-api:latest
+docker tag medran-medical-ai-local-webui yourusername/medran-webui:latest
 
 # Push to Docker Hub
-docker push yourusername/jarvis-api:latest
-docker push yourusername/jarvis-webui:latest
+docker push yourusername/medran-api:latest
+docker push yourusername/medran-webui:latest
 ```
 
 #### Step 3: Create Shareable Docker Compose
@@ -39,7 +39,7 @@ services:
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ACCESS_KEY: "minio"
       MINIO_SECRET_KEY: "minio12345"
-      MINIO_BUCKET: "jarvisdocs"
+      MINIO_BUCKET: "medrandocs"
       EMBEDDING_MODEL: "all-MiniLM-L6-v2"
       IMAGE_EMBEDDING_MODEL: "clip-ViT-B-32"
       MAX_CONTEXT_CHARS: "120000"
@@ -90,13 +90,13 @@ volumes:
 #### Export Your Images
 ```bash
 # Export all your custom images to files
-docker save jarvis-plus-local-api:latest | gzip > jarvis-api.tar.gz
-docker save jarvis-plus-local-webui:latest | gzip > jarvis-webui.tar.gz
+docker save medran-medical-ai-local-api:latest | gzip > medran-api.tar.gz
+docker save medran-medical-ai-local-webui:latest | gzip > medran-webui.tar.gz
 
 # Create a complete package
-tar -czf jarvis-complete.tar.gz \
-  jarvis-api.tar.gz \
-  jarvis-webui.tar.gz \
+tar -czf medran-complete.tar.gz \
+  medran-api.tar.gz \
+  medran-webui.tar.gz \
   docker-compose.yml \
   README.md
 ```
@@ -104,9 +104,9 @@ tar -czf jarvis-complete.tar.gz \
 #### Instructions for Recipients
 ```bash
 # Extract and load images
-tar -xzf jarvis-complete.tar.gz
-docker load < jarvis-api.tar.gz
-docker load < jarvis-webui.tar.gz
+tar -xzf medran-complete.tar.gz
+docker load < medran-api.tar.gz
+docker load < medran-webui.tar.gz
 
 # Start the services
 docker-compose up -d
@@ -118,9 +118,9 @@ docker-compose up -d
 ```bash
 git init
 git add .
-git commit -m "Initial Jarvis AI Assistant"
+git commit -m "Initial MedraN Medical AI Assistant"
 git branch -M main
-git remote add origin https://github.com/yourusername/jarvis-plus-local.git
+git remote add origin https://github.com/yourusername/medran-medical-ai-local.git
 git push -u origin main
 ```
 
@@ -170,10 +170,10 @@ jobs:
 docker run -d -p 5000:5000 --name registry registry:2
 
 # Tag and push to private registry
-docker tag jarvis-plus-local-api localhost:5000/jarvis-api
-docker tag jarvis-plus-local-webui localhost:5000/jarvis-webui
-docker push localhost:5000/jarvis-api
-docker push localhost:5000/jarvis-webui
+docker tag medran-medical-ai-local-api localhost:5000/medran-api
+docker tag medran-medical-ai-local-webui localhost:5000/medran-webui
+docker push localhost:5000/medran-api
+docker push localhost:5000/medran-webui
 ```
 
 ## 🚀 Easy One-Click Deployment Options
@@ -220,13 +220,13 @@ services:
 
 ### Create a README for Recipients
 ```markdown
-# 🤖 Jarvis AI Assistant
+# 🏥 MedraN Medical AI Assistant
 
 ## Quick Start
 
 1. **Install Docker**: https://docs.docker.com/get-docker/
-2. **Download**: `git clone https://github.com/yourusername/jarvis-plus-local.git`
-3. **Run**: `cd jarvis-plus-local && docker-compose up -d`
+2. **Download**: `git clone https://github.com/yourusername/medran-medical-ai-local.git`
+3. **Run**: `cd medran-medical-ai-local && docker-compose up -d`
 4. **Access**: http://localhost:3000
 
 ## Requirements
@@ -283,7 +283,7 @@ Before sharing, test on a clean machine:
 ```bash
 # Test the complete deployment
 git clone YOUR_REPO_URL
-cd jarvis-plus-local
+cd medran-medical-ai-local
 docker-compose up -d
 
 # Verify all services

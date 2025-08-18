@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     minio_endpoint: str
     minio_access_key: str
     minio_secret_key: str
-    minio_bucket: str = "jarvisdocs"
+    minio_bucket: str = "medrandocs"
 
     # OCR model for document preprocessing (TrOCR)
     ocr_model: str = "microsoft/trocr-base-printed"
