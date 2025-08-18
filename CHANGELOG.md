@@ -1,5 +1,38 @@
 # Changelog
 
+## [v2.1.0] - 2025-08-18 - 🚀 Major Bug Fixes & GPU Support
+
+### 🚑 Critical Fixes
+- **CLIP Model**: Fixed `'CLIPConfig' object has no attribute 'hidden_size'` error by updating image embedding model to `sentence-transformers/clip-ViT-B-32`
+- **LLM Connection**: Fixed `httpx.ConnectError` with robust error handling and user-friendly messages
+- **File Upload**: Increased reverse proxy file upload limit to **500MB** (`client_max_body_size`)
+- **Timeouts**: Increased proxy timeouts to **300 seconds** for large documents and slow models
+
+### 🎉 New Features & Performance
+- **🚀 Automatic GPU Acceleration**: System now **auto-detects and uses GPUs** when available
+  - CUDA GPUs (NVIDIA cards)
+  - Apple Silicon MPS (M1/M2/M3 Macs)
+  - CPU fallback when no GPU available
+- **⚡ Faster Processing**: Document ingestion and embeddings are significantly faster on GPU systems
+- **🧠 Smart Device Selection**: Models automatically use the best available compute device
+
+### 🔧 Enhanced Error Handling & Logging
+- **Connection Errors**: Clear error messages when LM Studio is not accessible
+- **Image Processing**: Ingest continues even if image embedding fails
+- **Better Logging**: Added detailed logging with status emojis for easier debugging
+- **API Responses**: Proper HTTP 500 responses with detailed error information
+
+### 📖 Documentation Updates
+- **Troubleshooting Guide**: Comprehensive guide for common issues
+- **GPU Support**: Documented automatic GPU detection and acceleration
+- **Error Solutions**: Solutions for `httpx.ConnectError`, CLIP errors, and upload issues
+
+### 🎯 User Experience Improvements
+- **Large File Support**: Upload documents up to 500MB
+- **More Reliable**: Robust error handling prevents system crashes
+- **Faster on GPU**: Automatic GPU acceleration for better performance
+- **Better Feedback**: Clear error messages help users resolve issues quickly
+
 ## [v2.0.0] - 2025-08-17 - 🚀 Reverse Proxy Architecture
 
 ### 🎉 Major Features
