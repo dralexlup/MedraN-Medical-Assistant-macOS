@@ -24,7 +24,7 @@ services:
       MINIO_BUCKET: "medrandocs"
 
       EMBEDDING_MODEL: "BAAI/bge-m3"
-      IMAGE_EMBEDDING_MODEL: "openai/clip-vit-large-patch14"
+      IMAGE_EMBEDDING_MODEL: "sentence-transformers/clip-ViT-B-32"
       OCR_MODEL: "microsoft/trocr-base-printed"
       MAX_CONTEXT_CHARS: "120000"
       ASR_MODEL: "small.en"
@@ -66,6 +66,7 @@ services:
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio12345
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:3000/minio-console/
     volumes: [ "minio_data:/data" ]
     expose:
       - "9000" # S3 API

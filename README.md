@@ -47,8 +47,10 @@ docker compose up --build -d
 - **Web UI**: http://localhost:3000/
 - **API**: http://localhost:3000/api/...
 - **Health Check**: http://localhost:3000/health
-- **MinIO Console**: http://localhost:3000/minio-console/ (optional)
+- **MinIO Console**: http://localhost:3000/minio-console/ (if needed for storage management)
 - **ChromaDB**: http://localhost:3000/chroma/ (optional)
+
+> **Note**: If MinIO console doesn't work perfectly through the proxy, you can enable direct access by temporarily adding `ports: ["9001:9001"]` to the minio service in docker-compose.yml and accessing it at http://localhost:9001
 
 ### 3. Upload Documents
 
@@ -187,7 +189,12 @@ environment:
 
 ### GPU Support
 
-To enable GPU acceleration, add to your `docker-compose.yml`:
+The system **automatically detects and uses GPU acceleration** when available:
+- **CUDA GPUs**: Automatically detected for NVIDIA cards
+- **Apple Silicon (MPS)**: Automatically detected for M1/M2/M3 Macs
+- **CPU Fallback**: Uses CPU when no GPU is available
+
+For Docker GPU access (NVIDIA only), add to your `docker-compose.yml`:
 
 ```yaml
 api:
@@ -200,21 +207,33 @@ api:
             capabilities: [gpu]
 ```
 
+**Note**: Apple Silicon GPU support works automatically without Docker configuration.
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **"Connection refused" errors**
-   - Ensure your LLM server is running on port 1234
-   - Check `host.docker.internal` resolves (Linux users may need to use host IP)
+1. **"Cannot connect to LLM server" (httpx.ConnectError)**
+   - Ensure LM Studio is running and **"Allow network access"** is enabled
+   - Verify the model is loaded in LM Studio
+   - Check that LM Studio is running on port 1234
+   - On Linux: Use your host IP instead of `host.docker.internal`
 
-2. **Out of memory during model loading**
-   - Increase Docker memory limits
-   - Use smaller models (e.g., `all-MiniLM-L6-v2` for embeddings)
+2. **"CLIPConfig object has no attribute 'hidden_size'"**
+   - This is fixed in the latest version with updated CLIP model
+   - If still occurring, try: `docker compose down && docker compose up --build`
 
-3. **Slow document processing**
-   - OCR processing is CPU-intensive, consider reducing OCR usage or using GPU acceleration
-   - Check container resource limits
+3. **Large file upload failures**
+   - The system now supports uploads up to 500MB
+   - Files that timeout during upload may need LM Studio to be started first
+
+4. **Out of memory during model loading**
+   - Increase Docker memory limits to 4GB+
+   - GPU acceleration reduces memory usage significantly
+
+5. **Slow document processing**
+   - GPU acceleration now automatic when available
+   - OCR processing is CPU-intensive on CPU-only systems
 
 ### Logs
 

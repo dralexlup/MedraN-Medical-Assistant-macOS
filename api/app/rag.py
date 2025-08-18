@@ -1,6 +1,16 @@
 import chromadb, httpx
+import torch
 from sentence_transformers import SentenceTransformer
 from .settings import settings
+
+# Detect available device
+def _get_device():
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"  # Apple Silicon GPU
+    else:
+        return "cpu"
 
 # Global variables for lazy loading
 _client = None
@@ -20,13 +30,17 @@ def _get_client():
 def _get_txt_model():
     global _txt_model
     if _txt_model is None:
-        _txt_model = SentenceTransformer(settings.embedding_model)
+        device = _get_device()
+        _txt_model = SentenceTransformer(settings.embedding_model, device=device)
+        print(f"✅ Loaded text embedding model on {device}")
     return _txt_model
 
 def _get_img_model():
     global _img_model
     if _img_model is None:
-        _img_model = SentenceTransformer(settings.image_embedding_model)
+        device = _get_device()
+        _img_model = SentenceTransformer(settings.image_embedding_model, device=device)
+        print(f"✅ Loaded image embedding model on {device}")
     return _img_model
 
 def _get_text_col():
@@ -84,7 +98,15 @@ async def call_llm(prompt: str, context_blocks):
       {"role":"user","content": f"{prompt}\n\nContext:\n{ctx}"}
     ]
     payload = {"model": settings.openai_chat_model, "messages": messages, "temperature": 0.2, "max_tokens": 512}
-    async with httpx.AsyncClient(timeout=120) as ax:
-        r = await ax.post(f"{settings.openai_base_url}/chat/completions", json=payload)
-        r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"]
+    
+    try:
+        async with httpx.AsyncClient(timeout=120) as ax:
+            r = await ax.post(f"{settings.openai_base_url}/chat/completions", json=payload)
+            r.raise_for_status()
+            return r.json()["choices"][0]["message"]["content"]
+    except httpx.ConnectError as e:
+        raise Exception(f"Cannot connect to LLM server at {settings.openai_base_url}. Please ensure LM Studio is running with network access enabled. Error: {str(e)}")
+    except httpx.TimeoutException as e:
+        raise Exception(f"LLM server timeout. The model may be too slow or overloaded. Error: {str(e)}")
+    except Exception as e:
+        raise Exception(f"LLM error: {str(e)}")
