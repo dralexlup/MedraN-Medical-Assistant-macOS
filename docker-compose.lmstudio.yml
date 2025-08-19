@@ -1,0 +1,40 @@
+services:
+  # LM Studio compatible server (llama.cpp server)
+  lmstudio:
+    build: ./lmstudio
+    ports:
+      - "1234:1234"
+    volumes:
+      # Persistent model storage - models downloaded once are kept
+      - ./models:/opt/models
+      # Cache for faster subsequent starts
+      - lmstudio_cache:/root/.cache
+    environment:
+      MODEL_PATH: "/opt/models/model.gguf"
+      HOST: "0.0.0.0"
+      PORT: "1234"
+      GPU_LAYERS: "-1"  # Use all GPU layers, set to 0 for CPU-only
+      CONTEXT_SIZE: "4096"
+      # Automatic model download settings
+      AUTO_DOWNLOAD: "true"
+      DOWNLOAD_RETRIES: "3"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1234/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s  # Allow 5 minutes for model download on first start
+
+  # Update API to use containerized LM Studio
+  api:
+    environment:
+      OPENAI_BASE_URL: "http://lmstudio:1234/v1"   # Use internal Docker network
+      OPENAI_API_KEY: "none"
+      OPENAI_CHAT_MODEL: "model"  # llama.cpp server uses "model" as the model name
+    depends_on:
+      lmstudio:
+        condition: service_healthy
+
+volumes:
+  lmstudio_cache:

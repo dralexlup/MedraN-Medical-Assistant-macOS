@@ -15,7 +15,7 @@ A powerful, self-hosted medical AI assistant designed for healthcare professiona
 - **🔍 Advanced OCR Processing**: Automatically enhances text extraction from medical documents, including scanned medical texts and complex layouts
 - **📚 RAG (Retrieval-Augmented Generation)**: Upload medical documents and get contextual, citation-backed answers
 - **🧠 Conversation Memory**: Maintains context across medical consultations and study sessions
-- **🎙️ Voice Transcription**: Speech-to-text for medical dictation and note-taking
+- **🎙️ Voice Transcription**: Speech-to-text for medical dictation and note-taking (supports WAV, MP3, M4A, FLAC, OGG)
 - **🖼️ Multi-modal Search**: Text and image retrieval from medical documents and imaging reports
 - **🌐 Web Interface**: Clean, responsive UI designed for healthcare professionals
 - **🐳 Docker-First**: Fully containerized for easy deployment in medical environments
@@ -29,6 +29,7 @@ A powerful, self-hosted medical AI assistant designed for healthcare professiona
 - **Docker** and **Docker Compose** installed
 - **4GB+ RAM** recommended for optimal performance
 - **Local LLM Server** (LM Studio, Ollama, or similar) running on port 1234
+  - **OR** use our **containerized LM Studio** (see Containerized Setup below)
 
 ### 1. Clone & Run
 
@@ -36,8 +37,15 @@ A powerful, self-hosted medical AI assistant designed for healthcare professiona
 git clone https://github.com/dralexlup/MedraN-Medical-Assistant.git
 cd MedraN-Medical-Assistant
 
-# Start all services (builds images automatically for your architecture)
+# 🎆 SUPER EASY: One-command setup (Recommended for beginners)
+./quick-start.sh
+
+# OR Manual setup options:
+# Option A: Use external LLM server (LM Studio, Ollama, etc.)
 docker compose up --build -d
+
+# Option B: Use containerized LM Studio (self-contained)
+./docker-start.sh -f docker-compose.lmstudio.yml up --build -d
 ```
 
 ### 2. Access the System
@@ -107,8 +115,38 @@ MAX_CONTEXT_CHARS: "120000"                            # Maximum context window
 ### Supported LLM Servers
 
 - **LM Studio**: Default configuration (port 1234)
+- **Containerized LM Studio**: Fully self-contained (see below)
 - **Ollama**: Change `OPENAI_BASE_URL` to `http://host.docker.internal:11434/v1`
 - **OpenAI Compatible APIs**: Any OpenAI-compatible endpoint
+
+### 🐳 Containerized Setup (Self-Contained)
+
+For a fully self-contained setup without external dependencies:
+
+1. **Download a model** in GGUF format:
+   ```bash
+   # Example: Download a medical-focused model
+   mkdir -p models
+   cd models
+   # Download your preferred GGUF model (e.g., from HuggingFace)
+   wget https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7b-chat.Q4_K_M.gguf
+   mv llama-2-7b-chat.Q4_K_M.gguf model.gguf
+   cd ..
+   ```
+
+2. **Start with containerized LM Studio**:
+   ```bash
+   # Automatically detects GPU support and starts everything
+   ./docker-start.sh -f docker-compose.lmstudio.yml up --build -d
+   ```
+
+3. **Access the system**: Same as regular setup at http://localhost:3000
+
+**Benefits:**
+- ✅ No external LLM server required
+- ✅ Automatic GPU acceleration (CUDA on Linux, CPU-optimized elsewhere)
+- ✅ Consistent performance across environments
+- ✅ Easier deployment and scaling
 
 ## 📋 API Endpoints
 

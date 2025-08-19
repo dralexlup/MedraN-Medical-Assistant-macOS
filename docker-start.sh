@@ -14,6 +14,17 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}🔍 Detecting platform and GPU configuration...${NC}"
 
+# Check if user wants containerized LM Studio
+USE_CONTAINERIZED_LM=false
+for arg in "$@"; do
+    if [[ "$arg" == *"docker-compose.lmstudio.yml"* ]]; then
+        USE_CONTAINERIZED_LM=true
+        echo -e "${GREEN}📦 Containerized LM Studio mode enabled${NC}"
+        echo -e "${BLUE}✨ Plug-and-play setup: AI model will auto-download if needed${NC}"
+        break
+    fi
+done
+
 # Detect operating system
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -34,7 +45,7 @@ case "${OS}" in
             nvidia-smi --query-gpu=name --format=csv,noheader
             
             # Check if Docker supports nvidia runtime
-            if docker info 2>/dev/null | grep -q "nvidia"; then
+            if docker info 2>/dev/null | grep -i "runtimes" | grep -q "nvidia"; then
                 echo -e "${GREEN}✅ NVIDIA Docker runtime available${NC}"
                 COMPOSE_FILES+=("-f" "docker-compose.gpu.yml")
             else
@@ -80,6 +91,6 @@ for file in "${COMPOSE_FILES[@]}"; do
     fi
 done
 
-# Execute docker-compose with detected configuration
+# Execute docker compose with detected configuration
 echo -e "${GREEN}🚀 Starting services...${NC}"
-exec docker-compose "${COMPOSE_FILES[@]}" "$@"
+exec docker compose "${COMPOSE_FILES[@]}" "$@"
