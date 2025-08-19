@@ -5,8 +5,8 @@ set -e
 echo "🚀 Starting LM Studio compatible server..."
 
 # Default model URL for automatic download (Google Gemma 3n-E4B-it)
-DEFAULT_MODEL_URL="https://huggingface.co/bartowski/google_gemma-3n-E4B-it-GGUF/resolve/main/gemma-3n-E4B-it-Q4_K_M.gguf"
-DEFAULT_MODEL_NAME="gemma-3n-E4B-it-Q4_K_M.gguf"
+DEFAULT_MODEL_URL="https://huggingface.co/bartowski/google_gemma-3n-E4B-it-GGUF/resolve/main/google_gemma-3n-E4B-it-Q4_K_M.gguf"
+DEFAULT_MODEL_NAME="google_gemma-3n-E4B-it-Q4_K_M.gguf"
 
 # Check if model exists, if not download a default one
 if [ ! -f "$MODEL_PATH" ]; then
@@ -49,7 +49,7 @@ else
 fi
 
 # Start the llama.cpp server with OpenAI API compatibility
-exec ./server \
+exec /opt/llama.cpp/build/bin/llama-server \
     --model "$MODEL_PATH" \
     --host "$HOST" \
     --port "$PORT" \

@@ -1,4 +1,13 @@
 services:
+  # Reverse proxy on :3000 — single entrypoint for WebUI + API + (optional) consoles
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    depends_on: [webui, api]
+    ports: ["3000:3000"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+
   # LM Studio compatible server (llama.cpp server)
   lmstudio:
     build: ./lmstudio
@@ -6,9 +15,7 @@ services:
       - "1234:1234"
     volumes:
       # Persistent model storage - models downloaded once are kept
-      - ./models:/opt/models
-      # Cache for faster subsequent starts
-      - lmstudio_cache:/root/.cache
+      - lmstudio_cache:/opt/models
     environment:
       MODEL_PATH: "/opt/models/model.gguf"
       HOST: "0.0.0.0"
@@ -26,15 +33,78 @@ services:
       retries: 5
       start_period: 300s  # Allow 5 minutes for model download on first start
 
-  # Update API to use containerized LM Studio
   api:
+    build: ./api
     environment:
       OPENAI_BASE_URL: "http://lmstudio:1234/v1"   # Use internal Docker network
       OPENAI_API_KEY: "none"
       OPENAI_CHAT_MODEL: "model"  # llama.cpp server uses "model" as the model name
+
+      CHROMA_URL: "http://chroma:8000"
+      REDIS_URL: "redis://redis:6379/0"
+
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "minio"
+      MINIO_SECRET_KEY: "minio12345"
+      MINIO_BUCKET: "medrandocs"
+
+      EMBEDDING_MODEL: "BAAI/bge-m3"
+      IMAGE_EMBEDDING_MODEL: "sentence-transformers/clip-ViT-B-32"
+      OCR_MODEL: "microsoft/trocr-base-printed"
+      MAX_CONTEXT_CHARS: "120000"
+      ASR_MODEL: "small.en"
+    volumes: [ "api_cache:/root/.cache" ]
+    expose: ["8080"]   # internal only; no public port
     depends_on:
       lmstudio:
         condition: service_healthy
+      chroma:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  webui:
+    build: ./simple-ui
+    expose: ["80"]     # internal only; no public port
+    depends_on: [api]
+    restart: unless-stopped
+
+  chroma:
+    image: chromadb/chroma:0.4.15
+    environment:
+      CHROMA_SERVER_HOST: 0.0.0.0
+      CHROMA_SERVER_HTTP_PORT: 8000
+      ALLOW_RESET: "TRUE"
+      CHROMA_SERVER_AUTHN_CREDENTIALS_FILE: ""
+      CHROMA_SERVER_AUTHN_PROVIDER: ""
+      CHROMA_CLIENT_AUTH_PROVIDER: ""
+    volumes: [ "chroma_data:/chroma" ]
+    expose: ["8000"]   # internal
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    expose: ["6379"]   # internal
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:3000/minio-console/
+    volumes: [ "minio_data:/data" ]
+    expose:
+      - "9000" # S3 API
+      - "9001" # Console
+    restart: unless-stopped
 
 volumes:
   lmstudio_cache:
+  chroma_data:
+  minio_data:
+  api_cache:

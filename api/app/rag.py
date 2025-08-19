@@ -116,8 +116,12 @@ async def call_llm(prompt: str, context_blocks):
     print(f"🤖 Calling LLM: {settings.openai_chat_model} at {settings.openai_base_url}")
     
     try:
+        headers = {"Content-Type": "application/json"}
+        if settings.openai_api_key:
+            headers["Authorization"] = f"Bearer {settings.openai_api_key}"
+        
         async with httpx.AsyncClient(timeout=120) as ax:
-            r = await ax.post(f"{settings.openai_base_url}/chat/completions", json=payload)
+            r = await ax.post(f"{settings.openai_base_url}/chat/completions", json=payload, headers=headers)
             r.raise_for_status()
             result = r.json()
             if "choices" in result and len(result["choices"]) > 0:

@@ -1,6 +1,6 @@
 # LM Studio containerized service
-# Based on Ubuntu with CUDA support for GPU acceleration
-FROM nvidia/cuda:12.1-devel-ubuntu22.04
+# Based on Ubuntu with optional CUDA support for GPU acceleration
+FROM ubuntu:22.04
 
 # Avoid interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -9,6 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
+    libcurl4-openssl-dev \
     unzip \
     git \
     build-essential \
@@ -21,14 +22,14 @@ RUN apt-get update && apt-get install -y \
 # 2. Or use a compatible OpenAI API server like llama.cpp server or vllm
 # For now, we'll use llama.cpp server as a drop-in replacement
 
-# Install llama.cpp with CUDA support
+# Install llama.cpp with cross-platform support
 WORKDIR /opt
 RUN git clone https://github.com/ggerganov/llama.cpp.git && \
     cd llama.cpp && \
-    mkdir build && cd build && \
-    cmake .. -DLLAMA_CUBLAS=ON && \
-    cmake --build . --config Release -j$(nproc) && \
-    cp bin/server ../server
+    mkdir build && \
+    cd build && \
+    cmake -DGGML_BACKEND_FALLBACK=OFF .. && \
+    cmake --build . --config Release -j$(nproc) -t llama-server
 
 # Create a models directory
 RUN mkdir -p /opt/models

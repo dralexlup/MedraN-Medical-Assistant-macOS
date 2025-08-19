@@ -39,6 +39,7 @@ case "${OS}" in
     Linux*)
         echo -e "${BLUE}🐧 Linux detected${NC}"
         
+        
         # Check for NVIDIA GPU
         if command -v nvidia-smi &> /dev/null; then
             echo -e "${GREEN}🎮 NVIDIA GPU detected!${NC}"
@@ -65,6 +66,7 @@ case "${OS}" in
             echo -e "${YELLOW}ℹ️  Note: Docker Desktop on macOS does not support direct GPU access${NC}"
             echo -e "${YELLOW}ℹ️  GPU acceleration is not available through Docker containers${NC}"
             COMPOSE_FILES+=("-f" "docker-compose.mps.yml")
+            
         else
             echo -e "${BLUE}💻 Intel Mac detected${NC}"
             echo -e "${YELLOW}ℹ️  Using CPU-only configuration${NC}"
@@ -73,6 +75,8 @@ case "${OS}" in
         
     CYGWIN*|MINGW32*|MSYS*|MINGW*)
         echo -e "${BLUE}🪟 Windows detected${NC}"
+        
+        
         echo -e "${YELLOW}ℹ️  Windows GPU detection not implemented yet${NC}"
         echo -e "${YELLOW}ℹ️  Using CPU-only configuration${NC}"
         ;;
