@@ -44,8 +44,8 @@ cd MedraN-Medical-Assistant
 # Option A: Use external LLM server (LM Studio, Ollama, etc.)
 docker compose up --build -d
 
-# Option B: Use containerized LM Studio (self-contained)
-./docker-start.sh -f docker-compose.lmstudio.yml up --build -d
+# Option B: Use containerized LM Studio with Google Gemma 3n-E4B (RECOMMENDED)
+docker-compose -f docker-compose.lmstudio.yml up --build -d
 ```
 
 ### 2. Access the System
@@ -119,34 +119,66 @@ MAX_CONTEXT_CHARS: "120000"                            # Maximum context window
 - **Ollama**: Change `OPENAI_BASE_URL` to `http://host.docker.internal:11434/v1`
 - **OpenAI Compatible APIs**: Any OpenAI-compatible endpoint
 
-### 🐳 Containerized Setup (Self-Contained)
+### 🐳 Containerized Setup with Google Gemma 3n-E4B (RECOMMENDED)
 
-For a fully self-contained setup without external dependencies:
+**NEW**: We now provide a fully containerized setup with Google's latest medical-oriented model!
 
-1. **Download a model** in GGUF format:
+#### 🩺 Google Gemma 3n-E4B Model Features:
+- **6.9B parameters** - Optimized for medical and healthcare tasks
+- **Instruction-tuned** - Specifically trained for conversational medical AI
+- **Q4_K_M quantization** - Perfect balance of quality and performance (3.95GB)
+- **Automatic download** - No manual model management required
+- **Cross-platform** - Works on macOS (Apple Silicon + Intel), Linux (ARM64 + x86_64)
+
+#### 🚀 One-Command Setup:
+```bash
+git clone https://github.com/dralexlup/MedraN-Medical-Assistant.git
+cd MedraN-Medical-Assistant
+
+# Start everything with Google Gemma 3n-E4B model
+docker-compose -f docker-compose.lmstudio.yml up --build -d
+
+# Access at http://localhost:3000 - that's it! 🎉
+```
+
+#### ✨ What Happens Automatically:
+1. **Builds optimized llama.cpp** with CMake for your platform
+2. **Downloads Google Gemma 3n-E4B** model (first startup only)
+3. **Starts all services** with proper health checks and dependencies
+4. **Ready in ~5 minutes** - fully plug-and-play experience
+
+#### 💻 Platform Support:
+- ✅ **macOS Apple Silicon** (M1/M2/M3) - CPU optimized
+- ✅ **macOS Intel** - CPU optimized  
+- ✅ **Linux ARM64** - CPU optimized
+- ✅ **Linux x86_64** - CPU optimized (GPU support coming soon)
+- ✅ **Windows** - Via Docker Desktop
+
+#### 🔧 Benefits:
+- ✅ **No external dependencies** - Everything containerized
+- ✅ **Medical AI optimized** - Google Gemma 3n-E4B excels at healthcare tasks
+- ✅ **Plug-and-play setup** - No manual configuration
+- ✅ **Persistent storage** - Models downloaded once, kept forever
+- ✅ **Health monitoring** - Automatic container health checks
+- ✅ **Production ready** - Robust, scalable architecture
+
+### 🐳 Custom Model Setup (Advanced)
+
+If you prefer to use your own GGUF model:
+
+1. **Place your model**:
    ```bash
-   # Example: Download a medical-focused model
+   # Create models directory and add your GGUF model
    mkdir -p models
-   cd models
-   # Download your preferred GGUF model (e.g., from HuggingFace)
-   wget https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7b-chat.Q4_K_M.gguf
-   mv llama-2-7b-chat.Q4_K_M.gguf model.gguf
-   cd ..
+   cp your-model.gguf models/model.gguf
    ```
 
-2. **Start with containerized LM Studio**:
+2. **Start with custom model**:
    ```bash
-   # Automatically detects GPU support and starts everything
-   ./docker-start.sh -f docker-compose.lmstudio.yml up --build -d
+   docker-compose -f docker-compose.lmstudio.yml up --build -d
    ```
 
-3. **Access the system**: Same as regular setup at http://localhost:3000
-
-**Benefits:**
-- ✅ No external LLM server required
-- ✅ Automatic GPU acceleration (CUDA on Linux, CPU-optimized elsewhere)
-- ✅ Consistent performance across environments
-- ✅ Easier deployment and scaling
+3. **Access the system**: http://localhost:3000
 
 ## 📋 API Endpoints
 
