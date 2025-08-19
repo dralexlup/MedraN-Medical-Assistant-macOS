@@ -8,7 +8,7 @@ Experience **3-10x faster** medical AI responses on your Apple Silicon Mac! This
 
 | Setup | Platform | GPU Access | Typical Speed | Model Size |
 |-------|----------|------------|---------------|------------|
-| **MLX (This Repo)** | macOS Apple Silicon | ✅ Direct Metal GPU | **50-150 tokens/s** | 3.5GB |
+| **MLX (This Repo)** | macOS Apple Silicon | ✅ Direct Metal GPU | **50-150 tokens/s** | 6GB |
 | Standard GGUF | macOS (Docker) | ❌ CPU only | 5-15 tokens/s | 3.95GB |
 
 > 🔗 **Need cross-platform compatibility?** Check out our [Standard Version](https://github.com/dralexlup/MedraN-Medical-Assistant) for Linux/Windows/Intel Macs.
@@ -48,10 +48,10 @@ docker-compose -f docker-compose.lmstudio.yml up --build -d
 ```
 
 ### What Happens Automatically
-1. **Downloads Google Gemma 3n-E4B** in MLX format (~3.5GB)
+1. **Downloads MedraN-E4B-Uncensored** model in MLX format (~6GB)
 2. **Activates Apple Metal GPU** acceleration  
 3. **Starts all services** with health monitoring
-4. **Ready in ~3-5 minutes** with blazing-fast inference
+4. **Ready in ~3-5 minutes** with blazing-fast medical AI
 
 ## 🍎 **Apple Silicon Optimization**
 
@@ -82,15 +82,14 @@ On **M1/M2/M3 MacBooks**:
 
 ## 🛠️ **Advanced Configuration**
 
-### Memory Optimization for Different Mac Models
+### Model Configuration Options
 ```yaml
-# For 8GB Macs (more conservative)
+# Default: MedraN-E4B-Uncensored (Recommended)
 environment:
-  MLX_MODEL: "mlx-community/google-gemma-3n-E4B-it-8bit"
+  MLX_MODEL: "drwlf/MedraN-E4B-Uncensored-MLX"
   
-# For 32GB+ Macs (maximum quality)  
-environment:
-  MLX_MODEL: "mlx-community/google-gemma-3n-E4B-it-fp16"
+# Alternative: For different memory requirements
+# Note: Adjust MODEL_PATH accordingly
 ```
 
 ### Performance Monitoring

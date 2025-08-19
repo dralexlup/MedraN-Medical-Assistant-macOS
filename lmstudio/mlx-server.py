@@ -36,7 +36,7 @@ app.add_middleware(
 # Global model variables
 model = None
 tokenizer = None
-model_name = "google-gemma-3n-E4B-it"
+model_name = "MedraN-E4B-Uncensored"
 
 # Pydantic models for OpenAI API compatibility
 class Message(BaseModel):

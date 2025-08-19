@@ -22,7 +22,7 @@ services:
       MODEL_PATH: "/opt/models/mlx-model"
       HOST: "0.0.0.0"
       PORT: "1234"
-      MLX_MODEL: "mlx-community/google-gemma-3n-E4B-it-4bit"
+      MLX_MODEL: "drwlf/MedraN-E4B-Uncensored-MLX"
       # MLX-specific settings for Apple Silicon
       METAL_DEVICE_WRAPPER_TYPE: "1"
     restart: unless-stopped

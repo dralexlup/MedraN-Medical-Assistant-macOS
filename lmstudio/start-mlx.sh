@@ -4,16 +4,16 @@ set -e
 
 echo "🍎 Starting MLX-optimized server for macOS Apple Silicon..."
 
-# Default model for automatic download (Google Gemma 3n-E4B MLX format)
-DEFAULT_MODEL_HF="mlx-community/google-gemma-3n-E4B-it-4bit"
+# Default model for automatic download (MedraN-E4B-Uncensored MLX format)
+DEFAULT_MODEL_HF="drwlf/MedraN-E4B-Uncensored-MLX"
 MODEL_PATH="/opt/models/mlx-model"
 
 # Check if model exists, if not download it
 if [ ! -d "$MODEL_PATH" ]; then
     echo "📦 No MLX model found at $MODEL_PATH"
     echo "🔄 Auto-downloading optimized MLX model for Apple Silicon..."
-    echo "📝 Model: Google Gemma 3n-E4B IT (MLX 4-bit quantized)"
-    echo "📏 Size: ~3.5GB (optimized for Apple Metal GPU acceleration)"
+    echo "📝 Model: MedraN-E4B-Uncensored (Medical AI optimized, MLX format)"
+    echo "📏 Size: ~6GB (specialized for medical and healthcare tasks)"
     
     # Create models directory
     mkdir -p /opt/models
