@@ -44,12 +44,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 2G
 
   webui:
     build: ./simple-ui
@@ -69,18 +63,12 @@ services:
     volumes: [ "chroma_data:/chroma" ]
     expose: ["8000"]   # internal
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 1G
 
   redis:
     image: redis:7-alpine
     expose: ["6379"]   # internal
     restart: unless-stopped
-    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
 
   minio:
     image: minio/minio:latest
